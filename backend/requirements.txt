@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pandas
+openpyxl
+python-jose
+passlib[bcrypt]
+python-multipart
+google-generativeai
+openai
+scikit-learn
+prophet
+langchain
+chromadb
