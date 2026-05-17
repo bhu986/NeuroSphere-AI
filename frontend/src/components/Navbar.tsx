@@ -25,7 +25,7 @@ export function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.href = "/"}>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
             <BrainCircuit className="text-white w-6 h-6" />
           </div>
@@ -37,7 +37,10 @@ export function Navbar() {
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#platform" className="hover:text-white transition-colors">Platform</a>
           <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-          <button className="bg-white text-black px-5 py-2 rounded-full font-semibold hover:bg-white/90 transition-colors">
+          <button 
+            onClick={() => window.location.href = "/dashboard"}
+            className="bg-white text-black px-5 py-2 rounded-full font-semibold hover:bg-white/90 transition-all shadow-lg hover:scale-105"
+          >
             Get Started
           </button>
         </div>
@@ -56,7 +59,10 @@ export function Navbar() {
           <a href="#features" className="text-white/80 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Features</a>
           <a href="#platform" className="text-white/80 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Platform</a>
           <a href="#pricing" className="text-white/80 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>Pricing</a>
-          <button className="bg-white text-black px-5 py-2 rounded-full font-semibold w-full">
+          <button 
+            onClick={() => window.location.href = "/dashboard"}
+            className="bg-white text-black px-5 py-2 rounded-full font-semibold w-full shadow-lg"
+          >
             Get Started
           </button>
         </div>
@@ -64,3 +70,5 @@ export function Navbar() {
     </motion.nav>
   );
 }
+
+export default Navbar;

@@ -15,7 +15,7 @@ import {
   Database
 } from "lucide-react";
 
-export function Navbar({ onToggleSidebar }) {
+export function DashboardNavbar({ onToggleSidebar }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -174,4 +174,4 @@ export function Navbar({ onToggleSidebar }) {
   );
 }
 
-export default Navbar;
+export default DashboardNavbar;

@@ -1,559 +1,162 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
-import { Navbar } from "../components/Navbar";
-import { Sidebar } from "../components/Sidebar";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { DashboardLayout } from "../components/DashboardLayout";
+import { ChatbotPanel } from "../components/ChatbotPanel";
 import { 
-  Send, 
-  Bot, 
-  User, 
+  Printer, 
   Sparkles, 
+  Bot, 
   Database, 
   History, 
-  Plus, 
-  Trash2, 
-  Copy, 
-  Check, 
-  AlertCircle, 
-  Loader2, 
-  ChevronDown, 
-  Table, 
-  FileCode,
-  Terminal,
-  MessageSquare
+  Terminal, 
+  Clock, 
+  ArrowRight,
+  Zap,
+  HelpCircle
 } from "lucide-react";
 
-// Initial dummy data for query history sidebar
-const initialHistory = [
-  { id: 1, title: "Average salary by department", table: "employees_db", date: "Today" },
-  { id: 2, title: "Top 5 highest transactions in Q1", table: "financial_transactions", date: "Yesterday" },
-  { id: 3, title: "Patient admission rates by age", table: "healthcare_records", date: "May 14" },
-  { id: 4, title: "Customer churn correlation with pricing", table: "ecom_users", date: "May 12" },
-  { id: 5, title: "Inventory restocking threshold alerts", table: "supply_chain_logs", date: "May 10" },
-];
-
-// Initial dummy messages for ChatGPT-style UI
-const initialMessages = [
-  {
-    id: 1,
-    sender: "ai",
-    text: "Hello! I am your NeuroSphere AI SQL Copilot. Select a dataset table above and ask me any natural language question. I will generate the SQL, execute it against your database, and return the results.",
-    timestamp: "10:00 AM",
-    isWelcome: true
-  },
-  {
-    id: 2,
-    sender: "user",
-    text: "Show average salary by department for active employees",
-    timestamp: "10:02 AM",
-    tableName: "employees_db"
-  },
-  {
-    id: 3,
-    sender: "ai",
-    text: "Here is the average salary breakdown by department for active employees:",
-    sql: "SELECT department, ROUND(AVG(salary), 2) as avg_salary FROM employees_db WHERE status = 'active' GROUP BY department ORDER BY avg_salary DESC;",
-    data: [
-      { department: "Engineering", avg_salary: "$142,500.00" },
-      { department: "Machine Learning", avg_salary: "$158,200.00" },
-      { department: "Product Management", avg_salary: "$138,000.00" },
-      { department: "Sales", avg_salary: "$112,400.00" },
-      { department: "Marketing", avg_salary: "$95,400.00" }
-    ],
-    timestamp: "10:03 AM"
-  }
-];
-
-const availableTables = [
-  { id: "employees_db", name: "employees_db", rows: "1,240 rows" },
-  { id: "financial_transactions", name: "financial_transactions", rows: "450,210 rows" },
-  { id: "healthcare_records", name: "healthcare_records", rows: "128,450 rows" },
-  { id: "ecom_users", name: "ecom_users", rows: "89,120 rows" },
-  { id: "supply_chain_logs", name: "supply_chain_logs", rows: "342,900 rows" },
-];
-
 export function Analytics() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("analytics");
-  
-  // Chatbot States
-  const [messages, setMessages] = useState(initialMessages);
-  const [inputQuery, setInputQuery] = useState("");
-  const [selectedTable, setSelectedTable] = useState("employees_db");
-  const [isLoading, setIsLoading] = useState(false);
-  const [history, setHistory] = useState(initialHistory);
-  const [copiedId, setCopiedId] = useState(null);
-  const [showTableDropdown, setShowTableDropdown] = useState(false);
+  const [selectedDataset, setSelectedDataset] = useState("employees_db");
 
-  const messagesEndRef = useRef(null);
-
-  // Auto-scroll to bottom of chat
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
-
-  // Handle Copy SQL
-  const handleCopySql = (sql, id) => {
-    navigator.clipboard.writeText(sql);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  // Handle Send Message
-  const handleSendMessage = async (e) => {
-    if (e?.preventDefault) e.preventDefault();
-    if (!inputQuery.trim() || isLoading) return;
-
-    const userMessage = {
-      id: Date.now(),
-      sender: "user",
-      text: inputQuery.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      tableName: selectedTable
-    };
-
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInputQuery("");
-    setIsLoading(true);
-
-    // Add to History Sidebar
-    const newHistoryItem = {
-      id: Date.now(),
-      title: inputQuery.trim(),
-      table: selectedTable,
-      date: "Just now"
-    };
-    setHistory([newHistoryItem, ...history]);
-
-    try {
-      // Connect to FastAPI backend endpoint: /sql/execute
-      const response = await axios.post("http://localhost:8000/sql/execute", {
-        table_name: selectedTable,
-        query: userMessage.text
-      });
-
-      const data = response.data;
-
-      const aiResponse = {
-        id: Date.now() + 1,
-        sender: "ai",
-        text: data.message || data.explanation || "Here are the query results generated by AI Copilot:",
-        sql: data.sql_query || data.sql || "",
-        data: data.results || data.data || null,
-        error: data.error || null,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-
-      setMessages((prev) => [...prev, aiResponse]);
-    } catch (error) {
-      console.error("FastAPI /sql/execute Error:", error);
-
-      // Fallback simulated AI response if FastAPI backend is offline / CORS error
-      const isNetworkError = error.message.includes("Network Error") || error.code === "ERR_NETWORK";
-      
-      const fallbackSql = `SELECT * FROM ${selectedTable} WHERE description ILIKE '%${userMessage.text.split(' ')[0]}%' LIMIT 10;`;
-      const fallbackData = [
-        { id: 101, metric: "Sample Result A", value: "84.5%", status: "Optimal" },
-        { id: 102, metric: "Sample Result B", value: "$12,450", status: "Verified" },
-        { id: 103, metric: "Sample Result C", value: "1,420 hrs", status: "Pending" }
-      ];
-
-      const errorResponse = {
-        id: Date.now() + 1,
-        sender: "ai",
-        text: isNetworkError 
-          ? `(Simulated Copilot Mode - FastAPI Backend Offline) I generated the SQL query for "${userMessage.text}" against table '${selectedTable}':`
-          : `Error executing query: ${error.response?.data?.detail || error.message}. Showing simulated fallback results:`,
-        sql: fallbackSql,
-        data: fallbackData,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isFallback: isNetworkError
-      };
-
-      setMessages((prev) => [...prev, errorResponse]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle Key Press (Enter to send)
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+  // Simulated Query History Sidebar
+  const savedQueries = [
+    { id: "Q-201", title: "Departmental Salary Averages", query: "Show average salary by department", dataset: "employees_db", rows: 5, time: "14:22" },
+    { id: "Q-202", title: "Top 10 High Value Transactions", query: "Find top 10 highest transactions", dataset: "financial_transactions", rows: 10, time: "12:05" },
+    { id: "Q-203", title: "Active Employees On Leave", query: "List active employees on leave", dataset: "employees_db", rows: 12, time: "09:40" },
+    { id: "Q-204", title: "Quarterly Onboarding Trends", query: "Summarize quarterly onboarding trend", dataset: "employees_db", rows: 6, time: "Yesterday" },
+    { id: "Q-205", title: "High Spend Outlier Detection", query: "Detect outliers in spend exceeding 99th percentile", dataset: "financial_transactions", rows: 142, time: "3 days ago" }
+  ];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex relative overflow-x-hidden selection:bg-blue-500 selection:text-white">
-      {/* Background Ambient Glows */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[150px] -z-10 pointer-events-none animate-pulse" />
-      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[150px] -z-10 pointer-events-none" />
+    <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      
+      {/* Top Bar: Title & Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10 font-sans">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+            <span>AI Query Copilot</span>
+            <span className="p-1 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-extrabold uppercase tracking-wider shadow-sm animate-pulse">
+              Gemini 2.5 Flash
+            </span>
+          </h1>
+          <p className="text-xs sm:text-sm text-white/50 font-medium mt-0.5">Conversational SQL synthesis, automated execution & visual intelligence</p>
+        </div>
 
-      {/* Main Navigation Sidebar */}
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
+        <div className="flex items-center gap-3 self-start sm:self-center">
+          <button 
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#09090c] border border-white/10 text-xs font-extrabold text-white hover:bg-white/10 transition-all shadow-inner hover:scale-105 active:scale-95"
+          >
+            <Printer className="w-4 h-4 text-purple-400" />
+            <span>Export Chat PDF</span>
+          </button>
+        </div>
+      </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden">
-        {/* Navbar */}
-        <Navbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+      {/* Main Grid: Chatbot Panel (Left 8 Spans) & Query History / Docs (Right 4 Spans) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-sans">
+        
+        {/* Left Column: AI Chatbot Panel */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="lg:col-span-8 w-full"
+        >
+          <ChatbotPanel initialDataset={selectedDataset} />
+        </motion.div>
 
-        {/* Outer Chat & History Container */}
-        <div className="flex-1 flex overflow-hidden relative max-w-[1600px] w-full mx-auto p-4 lg:p-6 gap-6 h-[calc(100vh-70px)]">
-          
-          {/* Query History Sidebar (Left Panel) */}
-          <div className="w-80 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex flex-col h-full shadow-2xl hidden md:flex">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <History className="w-5 h-5 text-blue-400" />
-                <h3 className="text-sm font-bold text-white tracking-tight">Query History</h3>
+        {/* Right Column: Query History & Quick Actions */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-4 space-y-6 w-full"
+        >
+          {/* Saved Queries Card */}
+          <div className="bg-[#09090c]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -z-10 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+            
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/30 shadow-lg shadow-purple-500/20 group-hover:rotate-12 transition-transform duration-300">
+                  <History className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white tracking-tight">Saved Neural Queries</h3>
+                  <p className="text-xs text-white/50 font-medium">Quick execution bookmarks</p>
+                </div>
               </div>
-              <button 
-                onClick={() => setMessages([initialMessages[0]])}
-                className="p-1.5 rounded-xl bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30 transition-colors flex items-center gap-1 text-xs font-bold px-2.5 py-1"
-                title="New Chat"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New</span>
-              </button>
+              <span className="text-[10px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-white/60 font-bold">
+                5 Bookmarks
+              </span>
             </div>
 
-            {/* History List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-              {history.map((item) => (
-                <div 
-                  key={item.id}
-                  onClick={() => setInputQuery(item.title)}
-                  className="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 hover:bg-white/10 transition-all cursor-pointer group relative flex flex-col justify-between gap-2"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-semibold text-white/90 group-hover:text-blue-400 transition-colors line-clamp-2">
-                      {item.title}
-                    </p>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setHistory(history.filter(h => h.id !== item.id));
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all"
-                      title="Delete query"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+            <div className="space-y-3">
+              {savedQueries.map((q) => (
+                <div key={q.id} className="p-3.5 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all duration-300 shadow-sm group/item cursor-pointer hover:scale-101">
+                  <div className="flex items-center justify-between gap-4 mb-1">
+                    <span className="text-xs font-extrabold text-white group-hover/item:text-purple-400 transition-colors truncate">{q.title}</span>
+                    <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md bg-white/10 text-white/80 shrink-0">{q.id}</span>
                   </div>
-
-                  <div className="flex items-center justify-between text-[10px] text-white/40 pt-1 border-t border-white/5">
-                    <span className="flex items-center gap-1 font-medium text-white/60 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                      <Database className="w-2.5 h-2.5 text-purple-400" />
-                      {item.table}
-                    </span>
-                    <span>{item.date}</span>
+                  <p className="text-xs text-white/60 truncate font-medium mb-2">{q.query}</p>
+                  
+                  <div className="flex items-center justify-between text-[10px] text-white/40 font-semibold pt-2 border-t border-white/5">
+                    <div className="flex items-center gap-1.5">
+                      <Database className="w-3 h-3 text-purple-400" />
+                      <span>{q.dataset} ({q.rows} rows)</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-blue-400" />
+                      <span>{q.time}</span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Sidebar Footer */}
-            <div className="pt-4 border-t border-white/10 mt-2 flex items-center justify-between text-xs text-white/50 px-1">
-              <span className="flex items-center gap-1">
-                <Terminal className="w-3.5 h-3.5 text-blue-400" />
-                <span>FastAPI Active</span>
-              </span>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
-                /sql/execute
-              </span>
-            </div>
+            <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-white/10 transition-colors duration-300 pointer-events-none" />
           </div>
 
-          {/* ChatGPT-style Chat Container (Right Panel) */}
-          <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col h-full shadow-2xl relative overflow-hidden">
+          {/* Quick Documentation Widget */}
+          <div className="bg-[#09090c]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -z-10 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
             
-            {/* Top Chat Header */}
-            <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/5 z-10 backdrop-blur-md">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 animate-pulse">
-                  <Bot className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-white tracking-tight">AI SQL Copilot</h2>
-                    <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 animate-spin" />
-                      <span>GPT-4o Engine</span>
-                    </span>
-                  </div>
-                  <p className="text-xs text-white/50">Natural language to SQL execution engine</p>
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:rotate-12 transition-transform duration-300">
+                <HelpCircle className="w-5 h-5" />
               </div>
-
-              {/* Table Selector Dropdown */}
-              <div className="relative self-start sm:self-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-white/40 hidden xl:inline-block">Target Dataset:</span>
-                  <button 
-                    onClick={() => setShowTableDropdown(!showTableDropdown)}
-                    className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#09090c] border border-white/10 text-xs font-bold text-white hover:bg-white/10 transition-all shadow-inner group"
-                  >
-                    <Database className="w-4 h-4 text-purple-400 group-hover:rotate-12 transition-transform" />
-                    <span>{selectedTable}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition-colors" />
-                  </button>
-                </div>
-
-                {/* Dropdown Menu */}
-                {showTableDropdown && (
-                  <div className="absolute right-0 mt-2 w-64 bg-[#0f0f12] border border-white/10 rounded-2xl shadow-2xl py-2 z-50 backdrop-blur-xl animate-in fade-in-50 zoom-in-95 duration-100">
-                    <div className="px-4 py-2 border-b border-white/10 mb-1">
-                      <p className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Select Database Table</p>
-                    </div>
-                    {availableTables.map((table) => (
-                      <button
-                        key={table.id}
-                        onClick={() => {
-                          setSelectedTable(table.id);
-                          setShowTableDropdown(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-xs transition-colors ${
-                          selectedTable === table.id 
-                            ? "bg-blue-600/20 text-blue-400 font-bold border-l-4 border-blue-500" 
-                            : "text-white/80 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <Database className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                          <span className="truncate">{table.name}</span>
-                        </div>
-                        <span className="text-[10px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded border border-white/5 shrink-0">
-                          {table.rows}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div>
+                <h3 className="text-base font-extrabold text-white tracking-tight">Copilot Guidelines</h3>
+                <p className="text-xs text-white/50 font-medium">Tips for optimal SQL synthesis</p>
               </div>
             </div>
 
-            {/* Scrollable Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 custom-scrollbar">
-              <AnimatePresence initial={false}>
-                {messages.map((msg) => {
-                  const isAi = msg.sender === "ai";
-                  return (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                      className={`flex gap-4 ${isAi ? "flex-row" : "flex-row-reverse"}`}
-                    >
-                      {/* Avatar */}
-                      <div className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center shadow-lg ${
-                        isAi 
-                          ? "bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 text-white shadow-indigo-500/20" 
-                          : "bg-white/10 border border-white/20 text-white"
-                      }`}>
-                        {isAi ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
-                      </div>
+            <ul className="space-y-2.5 text-xs text-white/70 font-medium bg-white/5 p-4 rounded-2xl border border-white/5 shadow-inner">
+              <li className="flex items-start gap-2">
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                <span>Specify exact column names when known (e.g., 'filter by department').</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                <span>Use keywords like 'top 10', 'average', or 'distribution' for best chart results.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                <span>Copilot automatically protects your database against destructive queries (DROP/DELETE).</span>
+              </li>
+            </ul>
 
-                      {/* Bubble Content Container */}
-                      <div className={`flex flex-col gap-2 max-w-[85%] lg:max-w-[75%] ${isAi ? "items-start" : "items-end"}`}>
-                        
-                        {/* Sender Name & Timestamp */}
-                        <div className="flex items-center gap-2 px-1">
-                          <span className="text-xs font-bold text-white/80">
-                            {isAi ? "AI Copilot" : "You"}
-                          </span>
-                          <span className="text-[10px] text-white/40 font-medium">
-                            {msg.timestamp}
-                          </span>
-                          {msg.tableName && (
-                            <span className="text-[10px] bg-purple-500/10 border border-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                              <Database className="w-2.5 h-2.5" />
-                              <span>{msg.tableName}</span>
-                            </span>
-                          )}
-                          {msg.isFallback && (
-                            <span className="text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                              <AlertCircle className="w-2.5 h-2.5" />
-                              <span>Simulated Mode</span>
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Main Text Bubble */}
-                        <div className={`rounded-2xl p-4 text-sm leading-relaxed shadow-xl ${
-                          isAi 
-                            ? "bg-white/5 backdrop-blur-xl border border-white/10 text-white/90 rounded-tl-none" 
-                            : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none font-medium shadow-blue-500/20"
-                        }`}>
-                          <p className="whitespace-pre-wrap">{msg.text}</p>
-                        </div>
-
-                        {/* Generated SQL Code Block */}
-                        {msg.sql && (
-                          <div className="w-full mt-2 bg-[#09090c] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
-                            <div className="px-4 py-2 bg-white/5 border-b border-white/10 flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-2 text-white/60 font-bold">
-                                <FileCode className="w-4 h-4 text-blue-400" />
-                                <span>Generated SQL Query</span>
-                              </div>
-                              <button 
-                                onClick={() => handleCopySql(msg.sql, msg.id)}
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-colors border border-white/10"
-                              >
-                                {copiedId === msg.id ? (
-                                  <>
-                                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span className="text-emerald-400 font-bold">Copied</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-3.5 h-3.5" />
-                                    <span>Copy SQL</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                            <div className="p-4 overflow-x-auto font-mono text-xs text-blue-300 leading-normal bg-black/50">
-                              <code>{msg.sql}</code>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Query Execution Results Table */}
-                        {msg.data && Array.isArray(msg.data) && msg.data.length > 0 && (
-                          <div className="w-full mt-2 bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
-                            <div className="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center justify-between text-xs font-bold text-white/80">
-                              <div className="flex items-center gap-2">
-                                <Table className="w-4 h-4 text-purple-400" />
-                                <span>Query Execution Results ({msg.data.length} rows)</span>
-                              </div>
-                              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
-                                Success
-                              </span>
-                            </div>
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-left border-collapse text-xs">
-                                <thead>
-                                  <tr className="border-b border-white/10 bg-white/5 text-white/40 uppercase tracking-wider text-[10px] font-bold">
-                                    {Object.keys(msg.data[0]).map((key) => (
-                                      <th key={key} className="py-2.5 px-4">{key}</th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5 text-white/80 font-medium">
-                                  {msg.data.map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                      {Object.values(row).map((val, i) => (
-                                        <td key={i} className="py-2.5 px-4 font-mono">{String(val)}</td>
-                                      ))}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Error Banner */}
-                        {msg.error && (
-                          <div className="w-full mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-xs text-red-400 font-bold">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            <span>{msg.error}</span>
-                          </div>
-                        )}
-
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-
-              {/* Loading Animation Bubble */}
-              {isLoading && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-4 items-center"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg animate-pulse">
-                    <Bot className="w-5 h-5" />
-                  </div>
-                  <div className="bg-white/5 backdrop-blur-xl border border-white/10 text-white/80 rounded-2xl rounded-tl-none p-4 px-5 shadow-xl flex items-center gap-3">
-                    <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                    <span className="text-xs font-semibold animate-pulse">AI Copilot is generating & executing SQL query...</span>
-                  </div>
-                </motion.div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Bottom Input Area */}
-            <div className="p-4 lg:p-6 border-t border-white/10 bg-white/5 backdrop-blur-md">
-              <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex flex-col gap-3">
-                <div className="relative flex items-center bg-[#09090c] border border-white/10 rounded-2xl shadow-2xl focus-within:border-blue-500/50 focus-within:bg-white/5 transition-all duration-300">
-                  
-                  {/* Textarea Input */}
-                  <textarea
-                    value={inputQuery}
-                    onChange={(e) => setInputQuery(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={`Ask AI Copilot anything about '${selectedTable}' (e.g., "Show average salary by department", "Find top 10 highest transactions")...`}
-                    rows={1}
-                    className="w-full bg-transparent py-4 pl-5 pr-14 text-sm text-white placeholder:text-white/40 focus:outline-none resize-none min-h-[56px] max-h-32 custom-scrollbar"
-                  />
-
-                  {/* Send Button */}
-                  <button
-                    type="submit"
-                    disabled={!inputQuery.trim() || isLoading}
-                    className={`absolute right-3 p-2.5 rounded-xl transition-all flex items-center justify-center ${
-                      inputQuery.trim() && !isLoading
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/30 scale-100 hover:scale-105"
-                        : "bg-white/5 text-white/30 border border-white/5 cursor-not-allowed scale-95"
-                    }`}
-                    title="Send Query (Enter)"
-                  >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  </button>
-                </div>
-
-                {/* Input Footer Hints */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 text-[11px] text-white/40 font-medium">
-                  <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1 hover:text-white/70 transition-colors cursor-pointer">
-                      <Sparkles className="w-3 h-3 text-blue-400" />
-                      <span>Natural Language SQL</span>
-                    </span>
-                    <span className="flex items-center gap-1 hover:text-white/70 transition-colors cursor-pointer">
-                      <Database className="w-3 h-3 text-purple-400" />
-                      <span>Active Table: {selectedTable}</span>
-                    </span>
-                  </div>
-                  <span>Press <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[10px] font-mono">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[10px] font-mono">Shift + Enter</kbd> for newline</span>
-                </div>
-              </form>
-            </div>
-
+            <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-white/10 transition-colors duration-300 pointer-events-none" />
           </div>
+        </motion.div>
 
-        </div>
       </div>
-    </div>
+
+    </DashboardLayout>
   );
 }
 

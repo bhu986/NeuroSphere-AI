@@ -46,10 +46,16 @@ export function HeroSection() {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
         >
-          <button className="h-12 px-8 rounded-full bg-white text-black font-semibold flex items-center gap-2 hover:bg-white/90 transition-all">
+          <button 
+            onClick={() => window.location.href = "/dashboard"}
+            className="h-12 px-8 rounded-full bg-white text-black font-semibold flex items-center gap-2 hover:bg-white/90 transition-all shadow-lg hover:scale-105"
+          >
             Start Free Trial <ArrowRight className="w-4 h-4" />
           </button>
-          <button className="h-12 px-8 rounded-full glass font-semibold text-white hover:bg-white/5 transition-all cursor-pointer">
+          <button 
+            onClick={() => window.location.href = "/dashboard"}
+            className="h-12 px-8 rounded-full glass font-semibold text-white hover:bg-white/5 transition-all cursor-pointer shadow-lg hover:scale-105"
+          >
             Book a Demo
           </button>
         </motion.div>
@@ -146,3 +152,5 @@ export function HeroSection() {
     </section>
   );
 }
+
+export default HeroSection;
