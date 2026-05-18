@@ -10,6 +10,8 @@ import {
   Bar, 
   PieChart, 
   Pie, 
+  AreaChart,
+  Area,
   Cell, 
   XAxis, 
   YAxis, 
@@ -29,10 +31,13 @@ import {
   ChevronDown, 
   AlertCircle, 
   Filter, 
-  Search
+  Search,
+  Layers
 } from "lucide-react";
 
 const availableDatasets = [
+  { id: "Global_Superstore2", name: "Global_Superstore2" },
+  { id: "Titanic-Dataset", name: "Titanic-Dataset" },
   { id: "employees_db", name: "employees_db" },
   { id: "financial_transactions", name: "financial_transactions" },
   { id: "healthcare_records", name: "healthcare_records" },
@@ -42,7 +47,7 @@ const availableDatasets = [
 
 const PIE_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#10b981", "#f59e0b", "#6366f1"];
 
-export function AnimatedCharts({ initialDataset = "employees_db" }) {
+export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
   const [isMounted, setIsMounted] = useState(false);
   const [selectedDataset, setSelectedDataset] = useState(initialDataset);
   const [recommendedCharts, setRecommendedCharts] = useState([]);
@@ -52,8 +57,16 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
   const [isSimulated, setIsSimulated] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [dynamicDatasets, setDynamicDatasets] = useState(availableDatasets);
 
   useEffect(() => setIsMounted(true), []);
+
+  useEffect(() => {
+    setSelectedDataset(initialDataset);
+    if (initialDataset && !dynamicDatasets.find(d => d.id === initialDataset)) {
+      setDynamicDatasets(prev => [{ id: initialDataset, name: initialDataset }, ...prev]);
+    }
+  }, [initialDataset]);
 
   // Fetch Recommended Charts from FastAPI Backend
   const fetchChartRecommendations = async (datasetName) => {
@@ -62,22 +75,24 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
     setIsSimulated(false);
 
     try {
+      console.log(`[NeuroSphere] Fetching chart recommendations for: ${datasetName}`);
       const response = await axios.post("http://localhost:8000/analytics/recommend-charts", {
         table_name: datasetName
-      });
+      }, { timeout: 5000 });
 
-      if (response.data && response.data.charts) {
+      console.log(`[NeuroSphere] Chart API response:`, response.data);
+
+      if (response.data && response.data.charts && response.data.charts.length > 0) {
         setRecommendedCharts(response.data.charts);
+        console.log(`[NeuroSphere] Loaded ${response.data.charts.length} charts successfully.`);
       } else {
-        throw new Error("Invalid chart recommendation response from server.");
+        throw new Error(`No charts generated for dataset '${datasetName}'. Activating fallback.`);
       }
     } catch (err) {
-      console.error("FastAPI /analytics/recommend-charts Error:", err);
-
-      const isNetworkError = err.message.includes("Network Error") || err.code === "ERR_NETWORK";
-      console.warn("Simulating Chart Recommendation Mode - FastAPI Backend Offline or Table Not Found");
+      console.error("[NeuroSphere] /analytics/recommend-charts Error:", err.message);
+      console.warn("[NeuroSphere] Activating Simulated Chart Fallback Mode");
       setIsSimulated(true);
-
+      // Always set fallback charts to ensure the user sees something
       const fallbackCharts = [
         {
           id: "sim_bar_dept_salary",
@@ -123,12 +138,28 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
             { quarter: "Q1 2026", onboarded: 140 },
             { quarter: "Q2 2026", onboarded: 165 },
           ]
+        },
+        {
+          id: "sim_area_budget",
+          type: "area",
+          title: `Budget vs Spend Comparison (${datasetName})`,
+          description: "Comparative area distribution of allocated budget and actual spend.",
+          xAxisKey: "department",
+          yAxisKey: "spend",
+          secondaryYAxisKey: "budget",
+          data: [
+            { department: "Eng", spend: 420000, budget: 450000 },
+            { department: "ML", spend: 650000, budget: 600000 },
+            { department: "Prod", spend: 280000, budget: 300000 },
+            { department: "Sales", spend: 520000, budget: 500000 },
+            { department: "Mktg", spend: 310000, budget: 350000 },
+          ]
         }
       ];
 
       setRecommendedCharts(fallbackCharts);
-      if (!isNetworkError) {
-        setError(err.response?.data?.detail || err.message);
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
       }
     } finally {
       setIsLoading(false);
@@ -202,7 +233,7 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
                 </span>
               )}
             </div>
-            <p className="text-xs text-white/50 font-medium">Automated column detection (numeric & categorical) & Recharts config generation</p>
+            <p className="text-xs text-white/50 font-medium">Automated column detection (numeric, categorical & date) & Recharts config generation</p>
           </div>
         </div>
 
@@ -223,7 +254,7 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
 
           {/* Smart Filter Tabs */}
           <div className="flex items-center gap-1 bg-black/40 border border-white/10 p-1 rounded-2xl shadow-inner">
-            {["all", "bar", "line", "pie"].map((f) => (
+            {["all", "bar", "line", "pie", "area"].map((f) => (
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
@@ -261,7 +292,7 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
                   <div className="px-4 py-2 border-b border-white/10 mb-1 bg-white/[0.02]">
                     <p className="text-[10px] text-white/40 uppercase font-extrabold tracking-wider mb-0.5">Select Dataset</p>
                   </div>
-                  {availableDatasets.map((ds) => (
+                  {dynamicDatasets.map((ds) => (
                     <button
                       key={ds.id}
                       onClick={() => {
@@ -270,7 +301,7 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-3 text-xs transition-colors font-semibold ${
                         selectedDataset === ds.id 
-                          ? "bg-blue-600/20 text-blue-400 font-extrabold border-l-4 border-blue-500" 
+                          ? "bg-blue-600/20 text-blue-400 font-extrabold border-l-4 border-blue-50" 
                           : "text-white/80 hover:bg-white/5 hover:text-white"
                       }`}
                     >
@@ -314,7 +345,7 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
       ) : filteredCharts && filteredCharts.length > 0 ? (
         <div className="space-y-6">
           
-          {/* Top Section: First Recommended Chart (Usually Line or Bar) */}
+          {/* Top Section: First Recommended Chart */}
           {filteredCharts[0] && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -383,6 +414,21 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
                         animationDuration={1500} 
                       />
                     </BarChart>
+                  ) : filteredCharts[0].type === "area" ? (
+                    <AreaChart data={filteredCharts[0].data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorTopArea" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey={filteredCharts[0].xAxisKey} stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: "16px", fontSize: "12px", color: "#a3a3a3", fontWeight: 600 }} />
+                      <Area type="monotone" dataKey={filteredCharts[0].yAxisKey} name={filteredCharts[0].yAxisKey.replace('_', ' ').toUpperCase()} stroke="#3b82f6" fillOpacity={1} fill="url(#colorTopArea)" animationDuration={1500} />
+                    </AreaChart>
                   ) : (
                     <PieChart>
                       <Pie
@@ -412,12 +458,13 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
             </motion.div>
           )}
 
-          {/* Bottom Grid: Remaining Recommended Charts (Usually Bar and Pie) */}
+          {/* Bottom Grid: Remaining Recommended Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredCharts.slice(1).map((chart, idx) => {
               const isBar = chart.type === "bar";
               const isPie = chart.type === "pie";
               const isLine = chart.type === "line";
+              const isArea = chart.type === "area";
               const colorTheme = idx % 2 === 0 ? "purple" : "pink";
 
               return (
@@ -435,7 +482,7 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
                     <div className="flex items-center justify-between mb-1 pb-3 border-b border-white/10">
                       <div className="flex items-center gap-3.5">
                         <div className={`p-2.5 rounded-2xl bg-${colorTheme}-500/20 text-${colorTheme}-400 border border-${colorTheme}-500/30 shadow-lg shadow-${colorTheme}-500/20 group-hover:rotate-12 transition-transform duration-300`}>
-                          {isBar ? <BarChart2 className="w-5 h-5" /> : isPie ? <PieChartIcon className="w-5 h-5" /> : <Activity className="w-5 h-5" />}
+                          {isBar ? <BarChart2 className="w-5 h-5" /> : isPie ? <PieChartIcon className="w-5 h-5" /> : isArea ? <Layers className="w-5 h-5" /> : <Activity className="w-5 h-5" />}
                         </div>
                         <h3 className="text-lg font-extrabold text-white tracking-tight">{chart.title}</h3>
                       </div>
@@ -476,6 +523,20 @@ export function AnimatedCharts({ initialDataset = "employees_db" }) {
                           <Tooltip content={<CustomTooltip />} />
                           <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: "20px", fontSize: "12px", color: "#a3a3a3", fontWeight: 600 }} />
                         </PieChart>
+                      ) : isArea ? (
+                        <AreaChart data={chart.data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id={`colorArea_${idx}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={idx % 2 === 0 ? "#8b5cf6" : "#ec4899"} stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor={idx % 2 === 0 ? "#8b5cf6" : "#ec4899"} stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey={chart.xAxisKey} stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
+                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Area type="monotone" dataKey={chart.yAxisKey} name={chart.yAxisKey.replace('_', ' ').toUpperCase()} stroke={idx % 2 === 0 ? "#8b5cf6" : "#ec4899"} fillOpacity={1} fill={`url(#colorArea_${idx})`} animationDuration={1500} />
+                        </AreaChart>
                       ) : (
                         <LineChart data={chart.data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />

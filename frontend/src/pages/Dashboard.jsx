@@ -26,7 +26,24 @@ import {
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [selectedDataset, setSelectedDataset] = useState("employees_db");
+  const [selectedDataset, setSelectedDataset] = useState("Global_Superstore2");
+
+  // Run client-side hydration check for URL params & localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ds = urlParams.get("dataset");
+      if (ds) {
+        setSelectedDataset(ds);
+        return;
+      }
+      const localDs = localStorage.getItem("neurosphere_active_dataset");
+      if (localDs) {
+        setSelectedDataset(localDs);
+      }
+    }
+  }, []);
+
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryReport, setSummaryReport] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -34,15 +51,15 @@ export function Dashboard() {
 
   // Real-time Activity Feed Simulation
   const activities = [
-    { id: 1, user: "admin@neurosphere.ai", action: "Uploaded dataset", target: "financial_transactions.csv", time: "2 mins ago", icon: Database, color: "blue" },
-    { id: 2, user: "AI Copilot", action: "Generated SQL query", target: "SELECT avg(salary) FROM employees_db", time: "15 mins ago", icon: Terminal, color: "purple" },
+    { id: 1, user: "admin@neurosphere.ai", action: "Uploaded dataset", target: `${selectedDataset}.csv`, time: "Just now", icon: Database, color: "blue" },
+    { id: 2, user: "AI Copilot", action: "Generated SQL query", target: `SELECT avg(salary) FROM ${selectedDataset}`, time: "15 mins ago", icon: Terminal, color: "purple" },
     { id: 3, user: "System Engine", action: "Completed data quality check", target: "Score: 94/100", time: "1 hour ago", icon: CheckCircle2, color: "emerald" },
     { id: 4, user: "admin@neurosphere.ai", action: "Exported executive report", target: "PDF Summary", time: "3 hours ago", icon: FileText, color: "pink" },
   ];
 
   // Recent Query History Simulation
   const recentQueries = [
-    { id: "Q-102", query: "Show average salary by department", dataset: "employees_db", rows: 5, latency: "42ms", time: "14:22" },
+    { id: "Q-102", query: "Show average salary by department", dataset: selectedDataset, rows: 5, latency: "42ms", time: "14:22" },
     { id: "Q-101", query: "Find top 10 highest transactions", dataset: "financial_transactions", rows: 10, latency: "18ms", time: "12:05" },
     { id: "Q-100", query: "List active employees on leave", dataset: "employees_db", rows: 12, latency: "35ms", time: "09:40" },
   ];
@@ -192,7 +209,7 @@ NeuroSphere AI Enterprise Cognitive Engine
       </div>
 
       {/* 1. Analytics KPI Cards */}
-      <AnalyticsCards />
+      <AnalyticsCards initialDataset={selectedDataset} />
 
       {/* 2. Animated Charts Section */}
       <AnimatedCharts initialDataset={selectedDataset} />

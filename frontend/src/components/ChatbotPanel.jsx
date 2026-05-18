@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 
 const availableDatasets = [
+  { id: "Global_Superstore2", name: "Global_Superstore2" },
+  { id: "Titanic-Dataset", name: "Titanic-Dataset" },
   { id: "employees_db", name: "employees_db" },
   { id: "financial_transactions", name: "financial_transactions" },
   { id: "healthcare_records", name: "healthcare_records" },
@@ -36,14 +38,14 @@ const suggestionChips = [
   "Summarize quarterly onboarding trend",
 ];
 
-export function ChatbotPanel({ initialDataset = "employees_db" }) {
+export function ChatbotPanel({ initialDataset = "Global_Superstore2" }) {
   const [selectedDataset, setSelectedDataset] = useState(initialDataset);
   const [messages, setMessages] = useState([
     {
       id: "welcome",
       sender: "ai",
       text: "Hello! I am your NeuroSphere AI Copilot. Ask me any natural language question about your dataset, and I will generate optimized PostgreSQL queries, execute them securely, and visualize the results instantly.",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: ""
     }
   ]);
   const [inputQuery, setInputQuery] = useState("");
@@ -52,6 +54,16 @@ export function ChatbotPanel({ initialDataset = "employees_db" }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
   const chatEndRef = useRef(null);
+
+  // Sync selectedDataset when initialDataset prop changes
+  useEffect(() => {
+    setSelectedDataset(initialDataset);
+  }, [initialDataset]);
+
+  // Set initial welcome timestamp on client mount to prevent Next.js SSR hydration mismatch
+  useEffect(() => {
+    setMessages(prev => prev.map(m => m.id === "welcome" ? { ...m, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } : m));
+  }, []);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -76,19 +88,21 @@ export function ChatbotPanel({ initialDataset = "employees_db" }) {
 
     try {
       // Connect to FastAPI backend endpoint: POST /sql/execute
+      // 25s timeout: Gemini API (8s) + file loading + processing = ~12-15s total
       const response = await axios.post("http://localhost:8000/sql/execute", {
         query: textToSend,
         table_name: selectedDataset
-      });
+      }, { timeout: 25000 });
+
 
       if (response.data && response.data.success) {
         const aiMsg = {
           id: `ai-${Date.now()}`,
           sender: "ai",
           text: response.data.explanation || "Here are the query results:",
-          sql: response.data.sql,
-          results: response.data.results,
-          columns: response.data.columns,
+          sql: response.data.generated_sql || response.data.sql,
+          results: response.data.data || response.data.results,
+          columns: response.data.data?.[0] ? Object.keys(response.data.data[0]) : response.data.columns || [],
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         setMessages((prev) => [...prev, aiMsg]);

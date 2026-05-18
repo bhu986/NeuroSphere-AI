@@ -4,7 +4,11 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = "postgresql://postgres:neuro123@localhost/neurosphere"
 
-engine = create_engine(DATABASE_URL)
+# Add a 5-second connect timeout so we don't hang for 60s when Postgres is offline
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"connect_timeout": 5}
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,
