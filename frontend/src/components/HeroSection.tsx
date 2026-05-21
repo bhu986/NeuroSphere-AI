@@ -169,6 +169,36 @@ export function HeroSection() {
         style={{ rotateX, rotateY }}
         className="mt-20 w-full max-w-5xl relative z-10 transform-style-3d cursor-grab active:cursor-grabbing"
       >
+        {/* Floating Badge 1 - CPU / Processing */}
+        <motion.div
+          animate={{ y: [0, -12, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -left-12 top-1/4 hidden lg:flex items-center gap-3 p-4 glass bg-[#050505]/90 border border-blue-500/30 rounded-2xl shadow-2xl shadow-blue-500/10 z-25 max-w-[200px]"
+        >
+          <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400">
+            <Zap className="w-4 h-4 animate-pulse" />
+          </div>
+          <div className="text-left">
+            <p className="text-[10px] text-white/50 font-extrabold uppercase tracking-wider">Engine Power</p>
+            <p className="text-sm font-black text-white">99.8% Optimal</p>
+          </div>
+        </motion.div>
+
+        {/* Floating Badge 2 - Latency / Speed */}
+        <motion.div
+          animate={{ y: [0, 12, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute -right-12 bottom-1/4 hidden lg:flex items-center gap-3 p-4 glass bg-[#050505]/90 border border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-500/10 z-25 max-w-[200px]"
+        >
+          <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400">
+            <Terminal className="w-4 h-4 animate-pulse" />
+          </div>
+          <div className="text-left">
+            <p className="text-[10px] text-white/50 font-extrabold uppercase tracking-wider">Neural Speed</p>
+            <p className="text-sm font-black text-white">42ms Latency</p>
+          </div>
+        </motion.div>
+
         <div className="glass-card p-3 sm:p-5 rounded-3xl border-white/20 shadow-2xl shadow-blue-500/20 overflow-hidden backdrop-blur-3xl bg-[#09090c]/80 border">
           <div className="bg-[#050505]/90 rounded-2xl border border-white/5 h-[450px] sm:h-[600px] flex flex-col overflow-hidden relative shadow-inner">
             

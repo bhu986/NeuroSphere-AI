@@ -95,9 +95,9 @@ export function AnalyticsCards({ initialDataset = "Global_Superstore2" }) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full animate-pulse">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-44 bg-[#09090c]/80 rounded-3xl border border-white/5" />
+          <div key={i} className="h-44 bg-[#09090c]/80 rounded-3xl border border-white/5 skeleton-pulse" />
         ))}
       </div>
     );

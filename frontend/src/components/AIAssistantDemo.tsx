@@ -11,8 +11,16 @@ const demoSuggestions = [
   "Summarize quarterly onboarding trend",
 ];
 
+interface Message {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  sql?: string;
+}
+
 export function AIAssistantDemo() {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       sender: "ai",
@@ -118,6 +126,13 @@ export function AIAssistantDemo() {
             <div className="flex items-center gap-3.5">
               <div className="relative">
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-500 animate-pulse blur-sm" />
+                {isTyping && (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    className="absolute -inset-1.5 rounded-[18px] border border-dashed border-pink-500 pointer-events-none z-10"
+                  />
+                )}
                 <div className="relative p-3 rounded-2xl bg-gradient-to-tr from-pink-600 via-purple-600 to-indigo-600 text-white shadow-lg">
                   <Bot className="w-6 h-6" />
                 </div>

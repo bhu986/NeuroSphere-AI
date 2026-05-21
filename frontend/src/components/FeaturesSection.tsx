@@ -53,6 +53,14 @@ const features = [
 export function FeaturesSection() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, top } = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   return (
     <section id="features" className="py-32 relative overflow-hidden">
       {/* Background Gradients */}
@@ -112,10 +120,16 @@ export function FeaturesSection() {
                 transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
+                onMouseMove={handleMouseMove}
+                style={{
+                  background: isHovered
+                    ? `radial-gradient(350px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), rgba(59, 130, 246, 0.12), transparent 80%), rgba(255, 255, 255, 0.05)`
+                    : "rgba(9, 9, 12, 0.8)",
+                }}
                 className={`glass-card p-8 rounded-3xl border transition-all duration-500 relative group overflow-hidden ${
                   isHovered 
-                    ? "bg-white/[0.06] border-white/20 shadow-2xl shadow-blue-500/10 scale-102 -translate-y-1" 
-                    : "bg-[#09090c]/80 border-white/10 shadow-xl"
+                    ? "border-blue-500/30 shadow-2xl shadow-blue-500/10 scale-102 -translate-y-1" 
+                    : "border-white/10 shadow-xl"
                 }`}
               >
                 {/* Active Hover Glow Blob */}

@@ -22,7 +22,7 @@ export function Navbar() {
     { name: "Features", href: "#features" },
     { name: "AI Workflow", href: "#workflow" },
     { name: "Live Preview", href: "#preview" },
-    { name: "Pricing", href: "#pricing" },
+
   ];
 
   return (
@@ -30,18 +30,17 @@ export function Navbar() {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled 
-          ? "bg-[#050505]/70 backdrop-blur-2xl border-b border-white/10 py-4 shadow-2xl shadow-black/80" 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+          ? "bg-[#050505]/70 backdrop-blur-2xl border-b border-white/10 py-4 shadow-2xl shadow-black/80"
           : "bg-transparent py-6"
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
-        
+
         {/* Brand Logo */}
         <MagneticWrapper pull={0.15}>
-          <div 
-            className="flex items-center gap-3 cursor-pointer group" 
+          <div
+            className="flex items-center gap-3 cursor-pointer group"
             onClick={() => window.location.href = "/"}
           >
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform duration-500 relative overflow-hidden">
@@ -84,7 +83,7 @@ export function Navbar() {
         {/* Right side CTA buttons */}
         <div className="hidden md:flex items-center gap-4">
           <MagneticWrapper pull={0.2}>
-            <button 
+            <button
               onClick={() => window.location.href = "/login"}
               className="px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-extrabold text-white transition-all duration-300 shadow-sm hover:shadow-white/10 active:scale-95"
             >
@@ -93,7 +92,7 @@ export function Navbar() {
           </MagneticWrapper>
 
           <MagneticWrapper pull={0.25}>
-            <button 
+            <button
               onClick={() => window.location.href = "/dashboard"}
               className="relative group px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-xs font-extrabold text-white shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-500 hover:scale-105 active:scale-95 flex items-center gap-2 overflow-hidden"
             >
@@ -106,19 +105,19 @@ export function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <div className="md:hidden flex items-center gap-2">
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white transition-colors"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
-      
+
       {/* Mobile Nav Dropdown */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -126,9 +125,9 @@ export function Navbar() {
             className="md:hidden bg-[#09090c]/95 backdrop-blur-3xl border-t border-white/10 px-6 py-6 flex flex-col gap-4 shadow-2xl overflow-hidden"
           >
             {navLinks.map((link) => (
-              <a 
+              <a
                 key={link.name}
-                href={link.href} 
+                href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-sm font-extrabold text-white/80 hover:text-white py-2 border-b border-white/5 flex items-center justify-between"
               >
@@ -137,13 +136,13 @@ export function Navbar() {
               </a>
             ))}
             <div className="pt-4 flex flex-col gap-3">
-              <button 
+              <button
                 onClick={() => window.location.href = "/login"}
                 className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-extrabold text-white shadow-sm"
               >
                 Sign In
               </button>
-              <button 
+              <button
                 onClick={() => window.location.href = "/dashboard"}
                 className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-xs font-extrabold text-white shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
               >

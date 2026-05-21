@@ -248,6 +248,65 @@ async def generate_analytics_insights(request: InsightsRequest):
             "detected_trends": trends_summary
         }
 
+        try:
+            prompt = f"""You are an elite AI Business Analyst for NeuroSphere AI.
+Analyze this dataset metadata:
+Dataset: {table_name}
+Total Rows: {total_rows}
+Total Columns: {total_cols}
+Numeric Cols: {numeric_cols}
+Categorical Cols: {categorical_cols}
+Missing Values: {missing_count}
+Duplicates: {duplicate_count}
+Anomalies (Isolation Forest): {anomalies_count}
+Correlation/Trends Summary: {trends_summary}
+
+Generate a JSON response EXACTLY matching this structure, with no markdown formatting around it:
+{{
+    "executive_summary": "A professional 2-sentence executive summary of the dataset.",
+    "business_insights": [
+        {{
+            "title": "Short Insight Title",
+            "category": "trend",
+            "description": "1 sentence explanation."
+        }}
+    ],
+    "anomaly_detection": {{
+        "anomalies_detected": {anomalies_count},
+        "anomaly_rate": "{safe_float((anomalies_count / max(1, total_rows)) * 100)}%",
+        "description": "Explanation of statistical outliers.",
+        "sample_anomalies": {json.dumps(anomaly_details) if anomaly_details else '[]'}
+    }},
+    "recommendations_panel": [
+        {{
+            "priority": "high",
+            "title": "Recommendation Title",
+            "description": "1 sentence recommendation."
+        }}
+    ],
+    "data_quality_report": {{
+        "overall_score": {health_score},
+        "summary": "1 sentence summary of data health.",
+        "actionable_steps": ["step 1", "step 2", "step 3"]
+    }}
+}}
+Ensure the categories for business_insights are ONLY 'trend', 'anomaly', 'optimization', or 'summary'.
+Ensure the priority for recommendations_panel is ONLY 'high', 'medium', or 'low'.
+"""
+            import re
+            gemini_response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+            raw_text = gemini_response.text.strip()
+            raw_text = re.sub(r'```json\n?|```', '', raw_text).strip()
+            ai_data = json.loads(raw_text)
+            ai_data["dataset_name"] = table_name
+
+            return {
+                "success": True,
+                "data": ai_data
+            }
+        except Exception as gemini_err:
+            print(f"Gemini fallback triggered: {gemini_err}")
+
         # Instead of calling Gemini immediately and risking rate limits, return robust stats
         return {
             "success": True,
