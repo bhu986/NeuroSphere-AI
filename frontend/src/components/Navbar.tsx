@@ -85,7 +85,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-4">
           <MagneticWrapper pull={0.2}>
             <button 
-              onClick={() => window.location.href = "/dashboard"}
+              onClick={() => window.location.href = "/login"}
               className="px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-extrabold text-white transition-all duration-300 shadow-sm hover:shadow-white/10 active:scale-95"
             >
               Sign In
@@ -138,7 +138,7 @@ export function Navbar() {
             ))}
             <div className="pt-4 flex flex-col gap-3">
               <button 
-                onClick={() => window.location.href = "/dashboard"}
+                onClick={() => window.location.href = "/login"}
                 className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-extrabold text-white shadow-sm"
               >
                 Sign In

@@ -14,8 +14,10 @@ import {
   Command,
   Database
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export function Navbar({ onToggleSidebar }) {
+  const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -128,11 +130,11 @@ export function Navbar({ onToggleSidebar }) {
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="flex items-center gap-2.5 p-1.5 pr-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 group shadow-sm hover:scale-102"
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-xs font-black text-white shadow-md shadow-purple-500/20 group-hover:rotate-6 transition-transform duration-300">
-                NS
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-xs font-black text-white shadow-md shadow-purple-500/20 group-hover:rotate-6 transition-transform duration-300 animate-[pulse_5s_infinite]">
+                {user?.email ? user.email.substring(0, 2).toUpperCase() : "NS"}
               </div>
               <span className="text-sm font-bold text-white/90 hidden sm:block group-hover:text-white transition-colors">
-                Admin User
+                {user?.name || (user?.email ? user.email.split("@")[0] : "Admin User")}
               </span>
               <ChevronDown className="w-4 h-4 text-white/50 hidden sm:block group-hover:text-white transition-colors duration-300" />
             </button>
@@ -148,7 +150,7 @@ export function Navbar({ onToggleSidebar }) {
                 >
                   <div className="px-4 py-3 border-b border-white/10 mb-1 bg-white/[0.02]">
                     <p className="text-[10px] text-white/40 uppercase tracking-wider font-extrabold mb-0.5">Signed in as</p>
-                    <p className="text-sm font-extrabold text-white truncate">admin@neurosphere.ai</p>
+                    <p className="text-sm font-extrabold text-white truncate">{user?.email || "admin@neurosphere.ai"}</p>
                   </div>
                   <a href="#profile" className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors">
                     <User className="w-4 h-4 text-blue-400" />
@@ -159,7 +161,10 @@ export function Navbar({ onToggleSidebar }) {
                     <span>Account Settings</span>
                   </a>
                   <div className="my-1 border-t border-white/10" />
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-colors">
+                  <button 
+                    onClick={logout}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                  >
                     <LogOut className="w-4 h-4" />
                     <span>Sign out</span>
                   </button>

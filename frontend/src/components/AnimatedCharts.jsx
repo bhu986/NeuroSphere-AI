@@ -3,34 +3,34 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
   AreaChart,
   Area,
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
 } from "recharts";
-import { 
-  TrendingUp, 
-  BarChart2, 
-  PieChart as PieChartIcon, 
-  Activity, 
-  Sparkles, 
-  RefreshCw, 
-  Database, 
-  ChevronDown, 
-  AlertCircle, 
-  Filter, 
+import {
+  TrendingUp,
+  BarChart2,
+  PieChart as PieChartIcon,
+  Activity,
+  Sparkles,
+  RefreshCw,
+  Database,
+  ChevronDown,
+  AlertCircle,
+  Filter,
   Search,
   Layers
 } from "lucide-react";
@@ -78,7 +78,7 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
       console.log(`[NeuroSphere] Fetching chart recommendations for: ${datasetName}`);
       const response = await axios.post("http://localhost:8000/analytics/recommend-charts", {
         table_name: datasetName
-      }, { timeout: 5000 });
+      }, { timeout: 3000 });
 
       console.log(`[NeuroSphere] Chart API response:`, response.data);
 
@@ -239,11 +239,11 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
 
         {/* Dataset Selector, Filters & Refresh Button */}
         <div className="flex flex-wrap items-center gap-3 self-start sm:self-center">
-          
+
           {/* Smart Search */}
           <div className="relative group hidden md:block">
             <Search className="w-3.5 h-3.5 text-white/40 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-blue-400 transition-colors duration-300" />
-            <input 
+            <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -258,11 +258,10 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold capitalize transition-all duration-300 ${
-                  activeFilter === f 
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20" 
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold capitalize transition-all duration-300 ${activeFilter === f
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20"
                     : "text-white/60 hover:text-white hover:bg-white/5"
-                }`}
+                  }`}
               >
                 {f}
               </button>
@@ -270,7 +269,7 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
           </div>
 
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-black/40 border border-white/10 text-xs font-extrabold text-white hover:bg-white/10 transition-all shadow-inner group"
             >
@@ -282,7 +281,7 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
             {/* Dropdown Menu */}
             <AnimatePresence>
               {showDropdown && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -299,11 +298,10 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
                         setSelectedDataset(ds.id);
                         setShowDropdown(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-xs transition-colors font-semibold ${
-                        selectedDataset === ds.id 
-                          ? "bg-blue-600/20 text-blue-400 font-extrabold border-l-4 border-blue-50" 
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-xs transition-colors font-semibold ${selectedDataset === ds.id
+                          ? "bg-blue-600/20 text-blue-400 font-extrabold border-l-4 border-blue-50"
                           : "text-white/80 hover:bg-white/5 hover:text-white"
-                      }`}
+                        }`}
                     >
                       <Database className="w-4 h-4 text-purple-400 shrink-0" />
                       <span className="truncate">{ds.name}</span>
@@ -314,7 +312,7 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
             </AnimatePresence>
           </div>
 
-          <button 
+          <button
             onClick={() => fetchChartRecommendations(selectedDataset)}
             disabled={isLoading}
             className="p-2.5 rounded-2xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all shadow-sm disabled:opacity-50 hover:scale-105"
@@ -344,10 +342,10 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
         </div>
       ) : filteredCharts && filteredCharts.length > 0 ? (
         <div className="space-y-6">
-          
+
           {/* Top Section: First Recommended Chart */}
           {filteredCharts[0] && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -388,14 +386,14 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
                       <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: "16px", fontSize: "12px", color: "#a3a3a3", fontWeight: 600 }} />
-                      <Line 
-                        type="monotone" 
-                        dataKey={filteredCharts[0].yAxisKey} 
-                        name={filteredCharts[0].yAxisKey.replace('_', ' ').toUpperCase()} 
-                        stroke="#3b82f6" 
-                        strokeWidth={4} 
-                        dot={{ r: 5, fill: "#3b82f6", stroke: "#050505", strokeWidth: 2 }} 
-                        activeDot={{ r: 9, fill: "#3b82f6", stroke: "#fff", strokeWidth: 3 }} 
+                      <Line
+                        type="monotone"
+                        dataKey={filteredCharts[0].yAxisKey}
+                        name={filteredCharts[0].yAxisKey.replace('_', ' ').toUpperCase()}
+                        stroke="#3b82f6"
+                        strokeWidth={4}
+                        dot={{ r: 5, fill: "#3b82f6", stroke: "#050505", strokeWidth: 2 }}
+                        activeDot={{ r: 9, fill: "#3b82f6", stroke: "#fff", strokeWidth: 3 }}
                         animationDuration={1500}
                       />
                     </LineChart>
@@ -406,20 +404,20 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
                       <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: "16px", fontSize: "12px", color: "#a3a3a3", fontWeight: 600 }} />
-                      <Bar 
-                        dataKey={filteredCharts[0].yAxisKey} 
-                        name={filteredCharts[0].yAxisKey.replace('_', ' ').toUpperCase()} 
-                        fill="#3b82f6" 
-                        radius={[12, 12, 0, 0]} 
-                        animationDuration={1500} 
+                      <Bar
+                        dataKey={filteredCharts[0].yAxisKey}
+                        name={filteredCharts[0].yAxisKey.replace('_', ' ').toUpperCase()}
+                        fill="#3b82f6"
+                        radius={[12, 12, 0, 0]}
+                        animationDuration={1500}
                       />
                     </BarChart>
                   ) : filteredCharts[0].type === "area" ? (
                     <AreaChart data={filteredCharts[0].data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorTopArea" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -468,7 +466,7 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
               const colorTheme = idx % 2 === 0 ? "purple" : "pink";
 
               return (
-                <motion.div 
+                <motion.div
                   key={chart.id || idx}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -527,8 +525,8 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
                         <AreaChart data={chart.data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <defs>
                             <linearGradient id={`colorArea_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor={idx % 2 === 0 ? "#8b5cf6" : "#ec4899"} stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor={idx % 2 === 0 ? "#8b5cf6" : "#ec4899"} stopOpacity={0}/>
+                              <stop offset="5%" stopColor={idx % 2 === 0 ? "#8b5cf6" : "#ec4899"} stopOpacity={0.8} />
+                              <stop offset="95%" stopColor={idx % 2 === 0 ? "#8b5cf6" : "#ec4899"} stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -567,7 +565,7 @@ export function AnimatedCharts({ initialDataset = "Global_Superstore2" }) {
           <Filter className="w-12 h-12 text-white/30 mx-auto animate-bounce" />
           <h3 className="text-lg font-extrabold text-white">No Charts Match Your Filter</h3>
           <p className="text-xs text-white/50 max-w-sm mx-auto font-medium">Try resetting your search query or selecting a different chart type filter above.</p>
-          <button 
+          <button
             onClick={() => { setActiveFilter("all"); setSearchQuery(""); }}
             className="px-6 py-2.5 bg-white/10 border border-white/10 rounded-2xl text-xs font-extrabold text-white hover:bg-white/20 transition-all shadow-sm"
           >
